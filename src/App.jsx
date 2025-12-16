@@ -4,6 +4,8 @@ import Home from './components/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import CreatePortfolio from './pages/CreatePortfolio'
+import PortfolioPreview from './pages/PortfolioPreview'
+import PublicPortfolio from './pages/PublicPortfolio'
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/create" element={<CreatePortfolio />} />
+          <Route path="/preview" element={<PortfolioPreview />} />
+          <Route path="/:username/publish" element={<PublicPortfolio />} />
           <Route
             path="/*"
             element={

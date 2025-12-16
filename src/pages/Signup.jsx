@@ -23,7 +23,7 @@ export default function Signup() {
     }
 
     try {
-      const res = await fetch('http://localhost:8000/user/signup', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email: form.email, password: form.password })

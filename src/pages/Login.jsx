@@ -17,7 +17,7 @@ export default function Login() {
     setMessage(null)
 
     try {
-      const res = await fetch('http://localhost:8000/user/login', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, password: form.password })
@@ -27,7 +27,22 @@ export default function Login() {
       if (!res.ok) throw new Error(data.message || 'Login failed')
 
       if (data.token) {
-        localStorage.setItem('AUTH_TOKEN', data.token)
+        try {
+          const maxAge = data.expires_in ?? data.data?.session?.expires_in ?? 604800
+          // Set token cookie
+          document.cookie = `AUTH_TOKEN=${data.token}; path=/; max-age=${maxAge}; samesite=Lax`
+          // Save user name in cookie if available
+          const name = data.data?.user?.user_metadata?.name ?? data.data?.session?.user?.user_metadata?.name
+          if (name) {
+            document.cookie = `AUTH_USER=${encodeURIComponent(name)}; path=/; max-age=${maxAge}; samesite=Lax`
+          }
+        } catch (cookieErr) {
+          // ignore cookie errors
+        }
+
+        // Notify other parts of the app that auth changed
+        window.dispatchEvent(new Event('authChanged'))
+
         setMessage({ type: 'success', text: 'Login successful!' })
         setTimeout(() => navigate('/'), 1000)
       }

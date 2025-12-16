@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -19,6 +19,29 @@ const Navbar = () => {
     { name: 'Reviews', href: '#reviews' },
     { name: 'Contact', href: '#footer' }
   ];
+
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+    return match ? decodeURIComponent(match[2]) : null
+  }
+
+  const deleteCookie = (name) => {
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  }
+
+  const [userName, setUserName] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const readAuth = () => {
+      const name = getCookie('AUTH_USER')
+      setUserName(name)
+    }
+
+    readAuth()
+    window.addEventListener('authChanged', readAuth)
+    return () => window.removeEventListener('authChanged', readAuth)
+  }, [])
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -48,9 +71,26 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden md:block">
-            <Link to="/login" className="btn-primary">Get Started</Link>
+          {/* CTA Button / Auth */}
+          <div className="hidden md:flex items-center gap-4">
+            {userName ? (
+              <>
+                <span className="text-gray-200 font-medium">{userName}</span>
+                <button
+                  onClick={() => {
+                    deleteCookie('AUTH_TOKEN')
+                    deleteCookie('AUTH_USER')
+                    window.dispatchEvent(new Event('authChanged'))
+                    navigate('/')
+                  }}
+                  className="btn-ghost text-sm px-3 py-2 border border-white/10 rounded-md text-white"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="btn-primary">Get Started</Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -85,7 +125,25 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
-            <Link to="/login" className="w-full mt-4 btn-primary block text-center">Get Started</Link>
+            {userName ? (
+              <div className="px-3 py-2 w-full flex items-center justify-between">
+                <span className="text-gray-200">{userName}</span>
+                <button
+                  onClick={() => {
+                    deleteCookie('AUTH_TOKEN')
+                    deleteCookie('AUTH_USER')
+                    window.dispatchEvent(new Event('authChanged'))
+                    setIsMobileMenuOpen(false)
+                    navigate('/')
+                  }}
+                  className="btn-ghost text-sm px-3 py-2 border border-white/10 rounded-md text-white"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="w-full mt-4 btn-primary block text-center">Get Started</Link>
+            )}
           </div>
         </div>
       )}
