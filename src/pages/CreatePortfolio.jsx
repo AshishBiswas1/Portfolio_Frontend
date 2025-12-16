@@ -322,6 +322,8 @@ export default function CreatePortfolio() {
 
   // Local UI state for add-forms
   const [activeTab, setActiveTab] = useState('skill')
+  const [editMode, setEditMode] = useState(false)
+  const [selectedItemId, setSelectedItemId] = useState(null)
   const [skillForm, setSkillForm] = useState({ name: '', category: '', proficiency: 50, order_index: 0 })
   const [projectForm, setProjectForm] = useState({ 
     title: '', 
@@ -394,16 +396,80 @@ export default function CreatePortfolio() {
     }
   }
 
+  const handleEditSkill = (skill) => {
+    setSkillForm({
+      name: skill.name || '',
+      category: skill.category || '',
+      proficiency: skill.proficiency || 50,
+      order_index: skill.order_index || 0
+    })
+    setSelectedItemId(skill.id)
+    setEditMode(true)
+    setActiveTab('skill')
+  }
+
   const handleAddSkill = async e => {
     e.preventDefault()
     if (!token) return setMessage({ type: 'error', text: 'Login required' })
-    await createPlaceholder('skills', { 
-      name: skillForm.name, 
-      category: skillForm.category || null,
-      proficiency: skillForm.proficiency,
-      order_index: skillForm.order_index || 0
+    
+    if (editMode && selectedItemId) {
+      // Update existing skill
+      setLoading(true)
+      setMessage(null)
+      try {
+        const res = await fetch(`${API_BASE}/update/skills/${selectedItemId}`, {
+          method: 'PATCH',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: skillForm.name,
+            category: skillForm.category || null,
+            proficiency: skillForm.proficiency,
+            order_index: skillForm.order_index || 0
+          })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Failed to update skill')
+        setMessage({ type: 'success', text: 'Skill updated' })
+        await refreshPortfolio()
+        setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 })
+        setEditMode(false)
+        setSelectedItemId(null)
+      } catch (err) {
+        setMessage({ type: 'error', text: err.message })
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      // Add new skill
+      await createPlaceholder('skills', { 
+        name: skillForm.name, 
+        category: skillForm.category || null,
+        proficiency: skillForm.proficiency,
+        order_index: skillForm.order_index || 0
+      })
+      setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 })
+    }
+  }
+
+  const handleEditProject = (project) => {
+    setProjectForm({
+      title: project.title || '',
+      description: project.description || '',
+      long_description: project.long_description || '',
+      demo_url: project.demo_url || '',
+      github_url: project.github_url || '',
+      technologies: project.technologies || '',
+      category: project.category || '',
+      featured: project.featured || false,
+      order_index: project.order_index || 0,
+      image: null
     })
-    setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 })
+    setSelectedItemId(project.id)
+    setEditMode(true)
+    setActiveTab('project')
   }
 
   const handleAddProject = async e => {
@@ -424,14 +490,17 @@ export default function CreatePortfolio() {
       fd.append('order_index', projectForm.order_index || 0)
       if (projectForm.image) fd.append('image', projectForm.image)
 
-      const res = await fetch(`${API_BASE}/project`, {
-        method: 'POST',
+      const url = editMode && selectedItemId ? `${API_BASE}/update/projects/${selectedItemId}` : `${API_BASE}/project`
+      const method = editMode && selectedItemId ? 'PATCH' : 'POST'
+
+      const res = await fetch(url, {
+        method: method,
         headers: { Authorization: `Bearer ${token}` },
         body: fd
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed')
-      setMessage({ type: 'success', text: 'Project added' })
+      setMessage({ type: 'success', text: editMode ? 'Project updated' : 'Project added' })
       await refreshPortfolio()
       setProjectForm({ 
         title: '', 
@@ -445,11 +514,31 @@ export default function CreatePortfolio() {
         order_index: 0, 
         image: null 
       })
+      setEditMode(false)
+      setSelectedItemId(null)
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEditExperience = (exp) => {
+    setExpForm({
+      company: exp.company || '',
+      position: exp.position || 'Student',
+      location: exp.location || '',
+      employment_type: exp.employment_type || '',
+      start_date: exp.start_date || '',
+      end_date: exp.end_date || '',
+      is_current: exp.is_current || false,
+      description: exp.description || '',
+      responsibilities: exp.responsibilities || '',
+      technologies: exp.technologies || ''
+    })
+    setSelectedItemId(exp.id)
+    setEditMode(true)
+    setActiveTab('experience')
   }
 
   const handleAddExperience = async e => {
@@ -470,14 +559,17 @@ export default function CreatePortfolio() {
       if (expForm.responsibilities) fd.append('responsibilities', expForm.responsibilities)
       if (expForm.technologies) fd.append('technologies', expForm.technologies)
 
-      const res = await fetch(`${API_BASE}/experience`, {
-        method: 'POST',
+      const url = editMode && selectedItemId ? `${API_BASE}/update/experience/${selectedItemId}` : `${API_BASE}/experience`
+      const method = editMode && selectedItemId ? 'PATCH' : 'POST'
+
+      const res = await fetch(url, {
+        method: method,
         headers: { Authorization: `Bearer ${token}` },
         body: fd
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed')
-      setMessage({ type: 'success', text: 'Experience added' })
+      setMessage({ type: 'success', text: editMode ? 'Experience updated' : 'Experience added' })
       await refreshPortfolio()
       setExpForm({ 
         company: '', 
@@ -491,11 +583,29 @@ export default function CreatePortfolio() {
         responsibilities: '', 
         technologies: '' 
       })
+      setEditMode(false)
+      setSelectedItemId(null)
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEditBlog = (blog) => {
+    setBlogForm({
+      title: blog.title || '',
+      excerpt: blog.excerpt || '',
+      content: blog.content || '',
+      author: blog.author || '',
+      tags: blog.tags || '',
+      published: blog.published || false,
+      published_at: blog.published_at || '',
+      cover: null
+    })
+    setSelectedItemId(blog.id)
+    setEditMode(true)
+    setActiveTab('blog')
   }
 
   const handleAddBlog = async e => {
@@ -514,14 +624,17 @@ export default function CreatePortfolio() {
       if (blogForm.published_at) fd.append('published_at', blogForm.published_at)
       if (blogForm.cover) fd.append('cover_image', blogForm.cover)
 
-      const res = await fetch(`${API_BASE}/blogs`, {
-        method: 'POST',
+      const url = editMode && selectedItemId ? `${API_BASE}/update/blogs/${selectedItemId}` : `${API_BASE}/blogs`
+      const method = editMode && selectedItemId ? 'PATCH' : 'POST'
+
+      const res = await fetch(url, {
+        method: method,
         headers: { Authorization: `Bearer ${token}` },
         body: fd
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed')
-      setMessage({ type: 'success', text: 'Blog added' })
+      setMessage({ type: 'success', text: editMode ? 'Blog updated' : 'Blog added' })
       await refreshPortfolio()
       setBlogForm({ 
         title: '', 
@@ -533,11 +646,27 @@ export default function CreatePortfolio() {
         published_at: '', 
         cover: null 
       })
+      setEditMode(false)
+      setSelectedItemId(null)
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEditService = (service) => {
+    setServiceForm({
+      title: service.title || '',
+      description: service.description || '',
+      features: Array.isArray(service.features) ? service.features.join(', ') : '',
+      price_range: service.price_range || '',
+      active: service.active !== undefined ? service.active : true,
+      order_index: service.order_index || 0
+    })
+    setSelectedItemId(service.id)
+    setEditMode(true)
+    setActiveTab('service')
   }
 
   const handleAddService = async e => {
@@ -555,8 +684,11 @@ export default function CreatePortfolio() {
         order_index: serviceForm.order_index || 0
       }
 
-      const res = await fetch(`${API_BASE}/services`, {
-        method: 'POST',
+      const url = editMode && selectedItemId ? `${API_BASE}/update/services/${selectedItemId}` : `${API_BASE}/services`
+      const method = editMode && selectedItemId ? 'PATCH' : 'POST'
+
+      const res = await fetch(url, {
+        method: method,
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -565,7 +697,7 @@ export default function CreatePortfolio() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed')
-      setMessage({ type: 'success', text: 'Service added' })
+      setMessage({ type: 'success', text: editMode ? 'Service updated' : 'Service added' })
       await refreshPortfolio()
       setServiceForm({
         title: '',
@@ -575,6 +707,8 @@ export default function CreatePortfolio() {
         active: true,
         order_index: 0
       })
+      setEditMode(false)
+      setSelectedItemId(null)
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
@@ -1053,28 +1187,57 @@ export default function CreatePortfolio() {
             </div>
 
             {activeTab === 'skill' && (
-              <form onSubmit={handleAddSkill} className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Skill Name*</label>
-                  <input required value={skillForm.name} onChange={e=>setSkillForm({...skillForm,name:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+              <>
+                <form onSubmit={handleAddSkill} className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Skill Name*</label>
+                    <input required value={skillForm.name} onChange={e=>setSkillForm({...skillForm,name:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Category</label>
+                    <input value={skillForm.category} onChange={e=>setSkillForm({...skillForm,category:e.target.value})} placeholder="e.g., Frontend, Backend" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Proficiency (%)</label>
+                    <input type="number" min="0" max="100" value={skillForm.proficiency} onChange={e=>setSkillForm({...skillForm,proficiency:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Order Index</label>
+                    <input type="number" min="0" value={skillForm.order_index} onChange={e=>setSkillForm({...skillForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
+                      {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
+                    </button>
+                    {editMode && (
+                      <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Skills</h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {portfolio.skills && portfolio.skills.length > 0 ? (
+                      portfolio.skills.map((skill, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                          <span>{skill.name}</span>
+                          <button type="button" onClick={() => handleEditSkill(skill)} className="text-purple-600 hover:text-purple-800 text-xs">
+                            Edit
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-400">No skills yet</p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
-                  <input value={skillForm.category} onChange={e=>setSkillForm({...skillForm,category:e.target.value})} placeholder="e.g., Frontend, Backend" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Proficiency (%)</label>
-                  <input type="number" min="0" max="100" value={skillForm.proficiency} onChange={e=>setSkillForm({...skillForm,proficiency:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Order Index</label>
-                  <input type="number" min="0" value={skillForm.order_index} onChange={e=>setSkillForm({...skillForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
-                </div>
-                <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Skill'}</button>
-              </form>
+              </>
             )}
 
             {activeTab === 'project' && (
+              <>
               <form onSubmit={handleAddProject} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Title*</label>
@@ -1116,11 +1279,39 @@ export default function CreatePortfolio() {
                   <label className="block text-sm font-medium text-gray-700">Image</label>
                   <input type="file" accept="image/*" onChange={e=>setProjectForm({...projectForm,image:e.target.files[0]})} className="mt-1 block w-full text-sm text-gray-500" />
                 </div>
-                <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Project'}</button>
+                <div className="flex gap-2">
+                  <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
+                    {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
+                  </button>
+                  {editMode && (
+                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setProjectForm({ title: '', description: '', long_description: '', demo_url: '', github_url: '', technologies: '', category: '', featured: false, order_index: 0, image: null }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Projects</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {portfolio.projects && portfolio.projects.length > 0 ? (
+                    portfolio.projects.map((project, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                        <span>{project.title}</span>
+                        <button type="button" onClick={() => handleEditProject(project)} className="text-purple-600 hover:text-purple-800 text-xs">
+                          Edit
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400">No projects yet</p>
+                  )}
+                </div>
+              </div>
+              </>
             )}
 
             {activeTab === 'experience' && (
+              <>
               <form onSubmit={handleAddExperience} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Company*</label>
@@ -1169,11 +1360,39 @@ export default function CreatePortfolio() {
                   <label className="block text-sm font-medium text-gray-700">Technologies Used</label>
                   <input value={expForm.technologies} onChange={e=>setExpForm({...expForm,technologies:e.target.value})} placeholder="React, Node.js, AWS" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
-                <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Experience'}</button>
+                <div className="flex gap-2">
+                  <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
+                    {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
+                  </button>
+                  {editMode && (
+                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setExpForm({ company: '', position: 'Student', location: '', employment_type: '', start_date: '', end_date: '', is_current: false, description: '', responsibilities: '', technologies: '' }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Experience</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {portfolio.experience && portfolio.experience.length > 0 ? (
+                    portfolio.experience.map((exp, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                        <span>{exp.position} at {exp.company}</span>
+                        <button type="button" onClick={() => handleEditExperience(exp)} className="text-purple-600 hover:text-purple-800 text-xs">
+                          Edit
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400">No experience yet</p>
+                  )}
+                </div>
+              </div>
+              </>
             )}
 
             {activeTab === 'blog' && (
+              <>
               <form onSubmit={handleAddBlog} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Title*</label>
@@ -1207,11 +1426,39 @@ export default function CreatePortfolio() {
                   <label className="block text-sm font-medium text-gray-700">Cover Image</label>
                   <input type="file" accept="image/*" onChange={e=>setBlogForm({...blogForm,cover:e.target.files[0]})} className="mt-1 block w-full text-sm text-gray-500" />
                 </div>
-                <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Blog'}</button>
+                <div className="flex gap-2">
+                  <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
+                    {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
+                  </button>
+                  {editMode && (
+                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setBlogForm({ title: '', excerpt: '', content: '', author: '', tags: '', published: false, published_at: '', cover: null }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Blogs</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {portfolio.blogs && portfolio.blogs.length > 0 ? (
+                    portfolio.blogs.map((blog, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                        <span>{blog.title}</span>
+                        <button type="button" onClick={() => handleEditBlog(blog)} className="text-purple-600 hover:text-purple-800 text-xs">
+                          Edit
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400">No blogs yet</p>
+                  )}
+                </div>
+              </div>
+              </>
             )}
 
             {activeTab === 'service' && (
+              <>
               <form onSubmit={handleAddService} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Service Title*</label>
@@ -1237,8 +1484,35 @@ export default function CreatePortfolio() {
                   <label className="block text-sm font-medium text-gray-700">Order Index</label>
                   <input type="number" min="0" value={serviceForm.order_index} onChange={e=>setServiceForm({...serviceForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
-                <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Service'}</button>
+                <div className="flex gap-2">
+                  <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
+                    {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
+                  </button>
+                  {editMode && (
+                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setServiceForm({ title: '', description: '', features: '', price_range: '', active: true, order_index: 0 }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Services</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {portfolio.services && portfolio.services.length > 0 ? (
+                    portfolio.services.map((service, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                        <span>{service.title}</span>
+                        <button type="button" onClick={() => handleEditService(service)} className="text-purple-600 hover:text-purple-800 text-xs">
+                          Edit
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-400">No services yet</p>
+                  )}
+                </div>
+              </div>
+              </>
             )}
           </div>
 
