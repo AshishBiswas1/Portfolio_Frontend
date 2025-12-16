@@ -4,8 +4,31 @@ import PortfolioNavbar from '../components/PortfolioNavbar'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
 
+function readTokenFromSources() {
+  // Prefer localStorage, fallback to cookie
+  try {
+    const t = localStorage.getItem('AUTH_TOKEN')
+    if (t) return t
+  } catch (e) {}
+
+  try {
+    const m = document.cookie.match(new RegExp('(^| )' + 'AUTH_TOKEN' + '=([^;]+)'))
+    if (m) return decodeURIComponent(m[2])
+  } catch (e) {}
+
+  return null
+}
+
 function useAuthToken() {
-  return localStorage.getItem('AUTH_TOKEN')
+  const [token, setToken] = useState(() => readTokenFromSources())
+
+  useEffect(() => {
+    const onAuth = () => setToken(readTokenFromSources())
+    window.addEventListener('authChanged', onAuth)
+    return () => window.removeEventListener('authChanged', onAuth)
+  }, [])
+
+  return token
 }
 
 export default function CreatePortfolio() {
@@ -37,14 +60,19 @@ export default function CreatePortfolio() {
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // Check authentication on mount
+  // Check authentication on mount with a short grace period in case token arrives shortly
   useEffect(() => {
+    let t = null
     if (!token) {
-      setMessage({ type: 'error', text: 'You are not logged in. Please login to access this page.' })
-      setTimeout(() => {
-        navigate('/login')
-      }, 2000)
-      return
+      // wait a short time before showing not-logged-in to allow auth to propagate
+      t = setTimeout(() => {
+        setMessage({ type: 'error', text: 'You are not logged in. Please login to access this page.' })
+        setTimeout(() => navigate('/login'), 1400)
+      }, 600)
+    }
+
+    return () => {
+      if (t) clearTimeout(t)
     }
   }, [token, navigate])
 

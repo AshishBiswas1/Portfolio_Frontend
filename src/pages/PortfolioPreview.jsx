@@ -3,8 +3,32 @@ import PortfolioNavbar from '../components/PortfolioNavbar'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
 
+function readTokenFromSources() {
+  // Prefer localStorage, fallback to cookie
+  try {
+    const t = localStorage.getItem('AUTH_TOKEN')
+    if (t) return t
+  } catch (e) {}
+
+  // Read cookie
+  try {
+    const m = document.cookie.match(new RegExp('(^| )' + 'AUTH_TOKEN' + '=([^;]+)'))
+    if (m) return decodeURIComponent(m[2])
+  } catch (e) {}
+
+  return null
+}
+
 function useAuthToken() {
-  return localStorage.getItem('AUTH_TOKEN')
+  const [token, setToken] = useState(() => readTokenFromSources())
+
+  useEffect(() => {
+    const onAuth = () => setToken(readTokenFromSources())
+    window.addEventListener('authChanged', onAuth)
+    return () => window.removeEventListener('authChanged', onAuth)
+  }, [])
+
+  return token
 }
 
 export default function PortfolioPreview() {
@@ -30,10 +54,13 @@ export default function PortfolioPreview() {
   const [hideDescImg, setHideDescImg] = useState(false)
 
   useEffect(() => {
+    let timer = null
     if (!token) {
-      setError('You must be logged in to preview your portfolio')
-      setLoading(false)
-      return
+      timer = setTimeout(() => {
+        setError('You must be logged in to preview your portfolio')
+        setLoading(false)
+      }, 600)
+      return () => clearTimeout(timer)
     }
 
     ;(async () => {
