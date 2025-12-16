@@ -17,6 +17,39 @@ export default function PublicPortfolio() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Auth detection: read token from localStorage or cookie and listen for authChanged
+  const [authToken, setAuthToken] = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  const readTokenFromSources = () => {
+    let t = null
+    try {
+      t = localStorage.getItem('AUTH_TOKEN') || null
+    } catch (e) {
+      t = null
+    }
+    if (!t && typeof document !== 'undefined') {
+      const m = document.cookie.match(/(?:^|; )AUTH_TOKEN=([^;]+)/)
+      if (m) t = decodeURIComponent(m[1])
+    }
+    return t
+  }
+
+  useEffect(() => {
+    const syncToken = () => {
+      const t = readTokenFromSources()
+      setAuthToken(t)
+    }
+    syncToken()
+    const onAuthChanged = () => syncToken()
+    window.addEventListener('authChanged', onAuthChanged)
+    const grace = setTimeout(() => setAuthChecked(true), 600)
+    return () => {
+      window.removeEventListener('authChanged', onAuthChanged)
+      clearTimeout(grace)
+    }
+  }, [])
+
   // Animation refs/state for floating image (same as CreatePortfolio)
   const heroImgRef = useRef(null)
   const descLeftRef = useRef(null)
