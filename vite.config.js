@@ -9,5 +9,11 @@ export default defineConfig({
         plugins: [['babel-plugin-react-compiler']]
       }
     })
-  ]
+  ],
+  server: {
+    historyApiFallback: true
+  },
+  preview: {
+    historyApiFallback: true
+  }
 });
