@@ -42,7 +42,8 @@ export default function CreatePortfolio() {
     skills: [],
     projects: [],
     experience: [],
-    blogs: []
+    blogs: [],
+    services: []
   })
   const [isPublished, setIsPublished] = useState(false)
   const [username, setUsername] = useState(null)
@@ -90,7 +91,8 @@ export default function CreatePortfolio() {
               skills: data.data.skills || [],
               projects: data.data.projects || [],
               experience: data.data.experience || [],
-              blogs: data.data.blogs || []
+              blogs: data.data.blogs || [],
+              services: data.data.services || []
             })
             setAbout({
               name: data.data.about?.name || '',
@@ -320,10 +322,49 @@ export default function CreatePortfolio() {
 
   // Local UI state for add-forms
   const [activeTab, setActiveTab] = useState('skill')
-  const [skillForm, setSkillForm] = useState({ name: '', proficiency: 50 })
-  const [projectForm, setProjectForm] = useState({ title: '', description: '', image: null })
-  const [expForm, setExpForm] = useState({ company: '', position: '', description: '' })
-  const [blogForm, setBlogForm] = useState({ title: '', content: '', cover: null })
+  const [skillForm, setSkillForm] = useState({ name: '', category: '', proficiency: 50, order_index: 0 })
+  const [projectForm, setProjectForm] = useState({ 
+    title: '', 
+    description: '', 
+    long_description: '', 
+    demo_url: '', 
+    github_url: '', 
+    technologies: '', 
+    category: '', 
+    featured: false, 
+    order_index: 0, 
+    image: null 
+  })
+  const [expForm, setExpForm] = useState({ 
+    company: '', 
+    position: 'Student', 
+    location: '', 
+    employment_type: '', 
+    start_date: '', 
+    end_date: '', 
+    is_current: false, 
+    description: '', 
+    responsibilities: '', 
+    technologies: '' 
+  })
+  const [blogForm, setBlogForm] = useState({ 
+    title: '', 
+    excerpt: '', 
+    content: '', 
+    author: '', 
+    tags: '', 
+    published: false, 
+    published_at: '', 
+    cover: null 
+  })
+  const [serviceForm, setServiceForm] = useState({
+    title: '',
+    description: '',
+    features: '',
+    price_range: '',
+    active: true,
+    order_index: 0
+  })
 
   // Contact form state (message to portfolio owner)
   const [contactEmail, setContactEmail] = useState('')
@@ -343,7 +384,8 @@ export default function CreatePortfolio() {
             skills: pd.data.skills || [],
             projects: pd.data.projects || [],
             experience: pd.data.experience || [],
-            blogs: pd.data.blogs || []
+            blogs: pd.data.blogs || [],
+            services: pd.data.services || []
           })
         }
       }
@@ -355,8 +397,13 @@ export default function CreatePortfolio() {
   const handleAddSkill = async e => {
     e.preventDefault()
     if (!token) return setMessage({ type: 'error', text: 'Login required' })
-    await createPlaceholder('skills', { name: skillForm.name, proficiency: skillForm.proficiency })
-    setSkillForm({ name: '', proficiency: 50 })
+    await createPlaceholder('skills', { 
+      name: skillForm.name, 
+      category: skillForm.category || null,
+      proficiency: skillForm.proficiency,
+      order_index: skillForm.order_index || 0
+    })
+    setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 })
   }
 
   const handleAddProject = async e => {
@@ -368,6 +415,13 @@ export default function CreatePortfolio() {
       const fd = new FormData()
       if (projectForm.title) fd.append('title', projectForm.title)
       if (projectForm.description) fd.append('description', projectForm.description)
+      if (projectForm.long_description) fd.append('long_description', projectForm.long_description)
+      if (projectForm.demo_url) fd.append('demo_url', projectForm.demo_url)
+      if (projectForm.github_url) fd.append('github_url', projectForm.github_url)
+      if (projectForm.technologies) fd.append('technologies', projectForm.technologies)
+      if (projectForm.category) fd.append('category', projectForm.category)
+      fd.append('featured', projectForm.featured)
+      fd.append('order_index', projectForm.order_index || 0)
       if (projectForm.image) fd.append('image', projectForm.image)
 
       const res = await fetch(`${API_BASE}/project`, {
@@ -379,7 +433,18 @@ export default function CreatePortfolio() {
       if (!res.ok) throw new Error(data.message || 'Failed')
       setMessage({ type: 'success', text: 'Project added' })
       await refreshPortfolio()
-      setProjectForm({ title: '', description: '', image: null })
+      setProjectForm({ 
+        title: '', 
+        description: '', 
+        long_description: '', 
+        demo_url: '', 
+        github_url: '', 
+        technologies: '', 
+        category: '', 
+        featured: false, 
+        order_index: 0, 
+        image: null 
+      })
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
@@ -396,7 +461,14 @@ export default function CreatePortfolio() {
       const fd = new FormData()
       if (expForm.company) fd.append('company', expForm.company)
       if (expForm.position) fd.append('position', expForm.position)
+      if (expForm.location) fd.append('location', expForm.location)
+      if (expForm.employment_type) fd.append('employment_type', expForm.employment_type)
+      if (expForm.start_date) fd.append('start_date', expForm.start_date)
+      if (expForm.end_date) fd.append('end_date', expForm.end_date)
+      fd.append('is_current', expForm.is_current)
       if (expForm.description) fd.append('description', expForm.description)
+      if (expForm.responsibilities) fd.append('responsibilities', expForm.responsibilities)
+      if (expForm.technologies) fd.append('technologies', expForm.technologies)
 
       const res = await fetch(`${API_BASE}/experience`, {
         method: 'POST',
@@ -407,7 +479,18 @@ export default function CreatePortfolio() {
       if (!res.ok) throw new Error(data.message || 'Failed')
       setMessage({ type: 'success', text: 'Experience added' })
       await refreshPortfolio()
-      setExpForm({ company: '', position: '', description: '' })
+      setExpForm({ 
+        company: '', 
+        position: 'Student', 
+        location: '', 
+        employment_type: '', 
+        start_date: '', 
+        end_date: '', 
+        is_current: false, 
+        description: '', 
+        responsibilities: '', 
+        technologies: '' 
+      })
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
@@ -423,7 +506,12 @@ export default function CreatePortfolio() {
     try {
       const fd = new FormData()
       if (blogForm.title) fd.append('title', blogForm.title)
+      if (blogForm.excerpt) fd.append('excerpt', blogForm.excerpt)
       if (blogForm.content) fd.append('content', blogForm.content)
+      if (blogForm.author) fd.append('author', blogForm.author)
+      if (blogForm.tags) fd.append('tags', blogForm.tags)
+      fd.append('published', blogForm.published)
+      if (blogForm.published_at) fd.append('published_at', blogForm.published_at)
       if (blogForm.cover) fd.append('cover_image', blogForm.cover)
 
       const res = await fetch(`${API_BASE}/blogs`, {
@@ -435,7 +523,58 @@ export default function CreatePortfolio() {
       if (!res.ok) throw new Error(data.message || 'Failed')
       setMessage({ type: 'success', text: 'Blog added' })
       await refreshPortfolio()
-      setBlogForm({ title: '', content: '', cover: null })
+      setBlogForm({ 
+        title: '', 
+        excerpt: '', 
+        content: '', 
+        author: '', 
+        tags: '', 
+        published: false, 
+        published_at: '', 
+        cover: null 
+      })
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddService = async e => {
+    e.preventDefault()
+    if (!token) return setMessage({ type: 'error', text: 'Login required' })
+    setLoading(true)
+    setMessage(null)
+    try {
+      const payload = {
+        title: serviceForm.title,
+        description: serviceForm.description,
+        features: serviceForm.features ? serviceForm.features.split(',').map(f => f.trim()) : [],
+        price_range: serviceForm.price_range,
+        active: serviceForm.active,
+        order_index: serviceForm.order_index || 0
+      }
+
+      const res = await fetch(`${API_BASE}/services`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || 'Failed')
+      setMessage({ type: 'success', text: 'Service added' })
+      await refreshPortfolio()
+      setServiceForm({
+        title: '',
+        description: '',
+        features: '',
+        price_range: '',
+        active: true,
+        order_index: 0
+      })
     } catch (err) {
       setMessage({ type: 'error', text: err.message })
     } finally {
@@ -751,8 +890,47 @@ export default function CreatePortfolio() {
           </div>
         </section>
 
+        {/* Services Section */}
+        <section id="services" className="section-padding bg-white">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-4xl font-bold text-center mb-12">Services</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {portfolio.services && portfolio.services.length > 0 ? (
+                portfolio.services.map((service, i) => (
+                  <div key={i} className="bg-gradient-to-br from-purple-50 to-white rounded-xl shadow-lg p-6 border border-purple-100">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
+                    <p className="text-gray-600 mb-4">{service.description}</p>
+                    {service.features && service.features.length > 0 && (
+                      <ul className="space-y-2 mb-4">
+                        {service.features.map((feature, fi) => (
+                          <li key={fi} className="flex items-start gap-2 text-sm text-gray-700">
+                            <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {service.price_range && (
+                      <div className="mt-4 pt-4 border-t border-purple-100">
+                        <p className="text-lg font-semibold text-purple-700">{service.price_range}</p>
+                      </div>
+                    )}
+                    {!service.active && (
+                      <span className="inline-block mt-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Inactive</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center text-gray-400">No services added yet</div>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* Contact / Message Section */}
-        <section id="contact-owner" className="section-padding bg-white">
+        <section id="contact-owner" className="section-padding bg-gray-50">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-6">Contact the Owner</h2>
             <p className="text-center text-gray-600 mb-6">Send a message to the owner of this portfolio.</p>
@@ -865,37 +1043,74 @@ export default function CreatePortfolio() {
             <h3 className="font-medium mb-3">Add Item</h3>
 
             <div className="mb-4">
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setActiveTab('skill')} className={`px-3 py-1 rounded ${activeTab==='skill' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Skill</button>
-                <button type="button" onClick={() => setActiveTab('project')} className={`px-3 py-1 rounded ${activeTab==='project' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Project</button>
-                <button type="button" onClick={() => setActiveTab('experience')} className={`px-3 py-1 rounded ${activeTab==='experience' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Experience</button>
-                <button type="button" onClick={() => setActiveTab('blog')} className={`px-3 py-1 rounded ${activeTab==='blog' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Blog</button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setActiveTab('skill')} className={`px-3 py-1 rounded text-sm ${activeTab==='skill' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Skill</button>
+                <button type="button" onClick={() => setActiveTab('project')} className={`px-3 py-1 rounded text-sm ${activeTab==='project' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Project</button>
+                <button type="button" onClick={() => setActiveTab('experience')} className={`px-3 py-1 rounded text-sm ${activeTab==='experience' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Experience</button>
+                <button type="button" onClick={() => setActiveTab('blog')} className={`px-3 py-1 rounded text-sm ${activeTab==='blog' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Blog</button>
+                <button type="button" onClick={() => setActiveTab('service')} className={`px-3 py-1 rounded text-sm ${activeTab==='service' ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700'}`}>Service</button>
               </div>
             </div>
 
             {activeTab === 'skill' && (
               <form onSubmit={handleAddSkill} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Skill Name</label>
-                  <input value={skillForm.name} onChange={e=>setSkillForm({...skillForm,name:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  <label className="block text-sm font-medium text-gray-700">Skill Name*</label>
+                  <input required value={skillForm.name} onChange={e=>setSkillForm({...skillForm,name:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <input value={skillForm.category} onChange={e=>setSkillForm({...skillForm,category:e.target.value})} placeholder="e.g., Frontend, Backend" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Proficiency (%)</label>
                   <input type="number" min="0" max="100" value={skillForm.proficiency} onChange={e=>setSkillForm({...skillForm,proficiency:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Index</label>
+                  <input type="number" min="0" value={skillForm.order_index} onChange={e=>setSkillForm({...skillForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Skill'}</button>
               </form>
             )}
 
             {activeTab === 'project' && (
-              <form onSubmit={handleAddProject} className="space-y-3">
+              <form onSubmit={handleAddProject} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <input value={projectForm.title} onChange={e=>setProjectForm({...projectForm,title:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  <label className="block text-sm font-medium text-gray-700">Title*</label>
+                  <input required value={projectForm.title} onChange={e=>setProjectForm({...projectForm,title:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
-                  <textarea value={projectForm.description} onChange={e=>setProjectForm({...projectForm,description:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={3} />
+                  <label className="block text-sm font-medium text-gray-700">Short Description</label>
+                  <textarea value={projectForm.description} onChange={e=>setProjectForm({...projectForm,description:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={2} placeholder="Brief summary" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Long Description</label>
+                  <textarea value={projectForm.long_description} onChange={e=>setProjectForm({...projectForm,long_description:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={3} placeholder="Detailed description" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Demo URL</label>
+                  <input type="url" value={projectForm.demo_url} onChange={e=>setProjectForm({...projectForm,demo_url:e.target.value})} placeholder="https://..." className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">GitHub URL</label>
+                  <input type="url" value={projectForm.github_url} onChange={e=>setProjectForm({...projectForm,github_url:e.target.value})} placeholder="https://github.com/..." className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Technologies (comma-separated)</label>
+                  <input value={projectForm.technologies} onChange={e=>setProjectForm({...projectForm,technologies:e.target.value})} placeholder="React, Node.js, MongoDB" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <input value={projectForm.category} onChange={e=>setProjectForm({...projectForm,category:e.target.value})} placeholder="Web App, Mobile, etc." className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="proj-featured" checked={projectForm.featured} onChange={e=>setProjectForm({...projectForm,featured:e.target.checked})} className="rounded" />
+                  <label htmlFor="proj-featured" className="text-sm font-medium text-gray-700">Featured Project</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Index</label>
+                  <input type="number" min="0" value={projectForm.order_index} onChange={e=>setProjectForm({...projectForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Image</label>
@@ -906,39 +1121,123 @@ export default function CreatePortfolio() {
             )}
 
             {activeTab === 'experience' && (
-              <form onSubmit={handleAddExperience} className="space-y-3">
+              <form onSubmit={handleAddExperience} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Company</label>
-                  <input value={expForm.company} onChange={e=>setExpForm({...expForm,company:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  <label className="block text-sm font-medium text-gray-700">Company*</label>
+                  <input required value={expForm.company} onChange={e=>setExpForm({...expForm,company:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Position</label>
                   <input value={expForm.position} onChange={e=>setExpForm({...expForm,position:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
-                  <textarea value={expForm.description} onChange={e=>setExpForm({...expForm,description:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={3} />
+                  <label className="block text-sm font-medium text-gray-700">Location</label>
+                  <input value={expForm.location} onChange={e=>setExpForm({...expForm,location:e.target.value})} placeholder="City, Country" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
-                {/* Company logo upload removed as requested */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Employment Type</label>
+                  <select value={expForm.employment_type} onChange={e=>setExpForm({...expForm,employment_type:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2">
+                    <option value="">Select type</option>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Freelance">Freelance</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                  <input type="date" value={expForm.start_date} onChange={e=>setExpForm({...expForm,start_date:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">End Date</label>
+                  <input type="date" value={expForm.end_date} onChange={e=>setExpForm({...expForm,end_date:e.target.value})} disabled={expForm.is_current} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="exp-current" checked={expForm.is_current} onChange={e=>setExpForm({...expForm,is_current:e.target.checked, end_date: e.target.checked ? '' : expForm.end_date})} className="rounded" />
+                  <label htmlFor="exp-current" className="text-sm font-medium text-gray-700">Currently working here</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea value={expForm.description} onChange={e=>setExpForm({...expForm,description:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={2} placeholder="Brief overview" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Responsibilities</label>
+                  <textarea value={expForm.responsibilities} onChange={e=>setExpForm({...expForm,responsibilities:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={3} placeholder="Key responsibilities (one per line or comma-separated)" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Technologies Used</label>
+                  <input value={expForm.technologies} onChange={e=>setExpForm({...expForm,technologies:e.target.value})} placeholder="React, Node.js, AWS" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
                 <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Experience'}</button>
               </form>
             )}
 
             {activeTab === 'blog' && (
-              <form onSubmit={handleAddBlog} className="space-y-3">
+              <form onSubmit={handleAddBlog} className="space-y-3 max-h-96 overflow-y-auto pr-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
-                  <input value={blogForm.title} onChange={e=>setBlogForm({...blogForm,title:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                  <label className="block text-sm font-medium text-gray-700">Title*</label>
+                  <input required value={blogForm.title} onChange={e=>setBlogForm({...blogForm,title:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Content / Excerpt</label>
-                  <textarea value={blogForm.content} onChange={e=>setBlogForm({...blogForm,content:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={4} />
+                  <label className="block text-sm font-medium text-gray-700">Excerpt</label>
+                  <textarea value={blogForm.excerpt} onChange={e=>setBlogForm({...blogForm,excerpt:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={2} placeholder="Short summary" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Content</label>
+                  <textarea value={blogForm.content} onChange={e=>setBlogForm({...blogForm,content:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={4} placeholder="Full blog content" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Author</label>
+                  <input value={blogForm.author} onChange={e=>setBlogForm({...blogForm,author:e.target.value})} placeholder="Author name" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
+                  <input value={blogForm.tags} onChange={e=>setBlogForm({...blogForm,tags:e.target.value})} placeholder="React, JavaScript, Tutorial" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="blog-published" checked={blogForm.published} onChange={e=>setBlogForm({...blogForm,published:e.target.checked})} className="rounded" />
+                  <label htmlFor="blog-published" className="text-sm font-medium text-gray-700">Publish immediately</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Publish Date</label>
+                  <input type="datetime-local" value={blogForm.published_at} onChange={e=>setBlogForm({...blogForm,published_at:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Cover Image</label>
                   <input type="file" accept="image/*" onChange={e=>setBlogForm({...blogForm,cover:e.target.files[0]})} className="mt-1 block w-full text-sm text-gray-500" />
                 </div>
                 <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Blog'}</button>
+              </form>
+            )}
+
+            {activeTab === 'service' && (
+              <form onSubmit={handleAddService} className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Service Title*</label>
+                  <input required value={serviceForm.title} onChange={e=>setServiceForm({...serviceForm,title:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea value={serviceForm.description} onChange={e=>setServiceForm({...serviceForm,description:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" rows={3} placeholder="Service description" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Features (comma-separated)</label>
+                  <input value={serviceForm.features} onChange={e=>setServiceForm({...serviceForm,features:e.target.value})} placeholder="Responsive design, SEO optimization" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Price Range</label>
+                  <input value={serviceForm.price_range} onChange={e=>setServiceForm({...serviceForm,price_range:e.target.value})} placeholder="$500 - $2000" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="service-active" checked={serviceForm.active} onChange={e=>setServiceForm({...serviceForm,active:e.target.checked})} className="rounded" />
+                  <label htmlFor="service-active" className="text-sm font-medium text-gray-700">Active Service</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Index</label>
+                  <input type="number" min="0" value={serviceForm.order_index} onChange={e=>setServiceForm({...serviceForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
+                </div>
+                <button disabled={loading} type="submit" className="w-full btn-primary text-sm py-2">{loading ? 'Adding...' : 'Add Service'}</button>
               </form>
             )}
           </div>

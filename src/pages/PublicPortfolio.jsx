@@ -12,7 +12,8 @@ export default function PublicPortfolio() {
     skills: [],
     projects: [],
     experience: [],
-    blogs: []
+    blogs: [],
+    services: []
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -85,7 +86,8 @@ export default function PublicPortfolio() {
           skills: data.data?.skills || [],
           projects: data.data?.projects || [],
           experience: data.data?.experience || [],
-          blogs: data.data?.blogs || []
+          blogs: data.data?.blogs || [],
+          services: data.data?.services || []
         })
       } catch (err) {
         setError(err.message)
@@ -447,8 +449,47 @@ export default function PublicPortfolio() {
           </div>
         </section>
 
+        {/* Services Section */}
+        <section id="services" className="section-padding bg-white">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-4xl font-bold text-center mb-12">Services</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {portfolio.services && portfolio.services.length > 0 ? (
+                portfolio.services.map((service, i) => (
+                  <div key={i} className="bg-gradient-to-br from-purple-50 to-white rounded-xl shadow-lg p-6 border border-purple-100">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
+                    <p className="text-gray-600 mb-4">{service.description}</p>
+                    {service.features && service.features.length > 0 && (
+                      <ul className="space-y-2 mb-4">
+                        {service.features.map((feature, fi) => (
+                          <li key={fi} className="flex items-start gap-2 text-sm text-gray-700">
+                            <svg className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {service.price_range && (
+                      <div className="mt-4 pt-4 border-t border-purple-100">
+                        <p className="text-lg font-semibold text-purple-700">{service.price_range}</p>
+                      </div>
+                    )}
+                    {!service.active && (
+                      <span className="inline-block mt-2 text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Inactive</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center text-gray-400">No services added yet</div>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* Contact Section */}
-        <section id="contact-owner" className="section-padding bg-white">
+        <section id="contact-owner" className="section-padding bg-gray-50">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-6">Get in Touch</h2>
             <p className="text-center text-gray-600 mb-6">Send a message to {portfolio.about.name || 'the portfolio owner'}.</p>
