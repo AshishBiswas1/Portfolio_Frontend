@@ -255,7 +255,7 @@ export default function CreatePortfolio() {
       if (about.name) form.append('name', about.name)
       if (about.designation) form.append('designation', about.designation)
       if (about.description) form.append('description', about.description)
-      if (profileImage) form.append('profile_image', profileImage)
+      if (profileImage) form.append('profileImage', profileImage)
 
       const res = await fetch(`${API_BASE}/about`, {
         method: 'POST',
@@ -488,7 +488,7 @@ export default function CreatePortfolio() {
       if (projectForm.category) fd.append('category', projectForm.category)
       fd.append('featured', projectForm.featured)
       fd.append('order_index', projectForm.order_index || 0)
-      if (projectForm.image) fd.append('image', projectForm.image)
+      if (projectForm.image) fd.append('projectImage', projectForm.image)
 
       const url = editMode && selectedItemId ? `${API_BASE}/update/projects/${selectedItemId}` : `${API_BASE}/project`
       const method = editMode && selectedItemId ? 'PATCH' : 'POST'
@@ -622,7 +622,7 @@ export default function CreatePortfolio() {
       if (blogForm.tags) fd.append('tags', blogForm.tags)
       fd.append('published', blogForm.published)
       if (blogForm.published_at) fd.append('published_at', blogForm.published_at)
-      if (blogForm.cover) fd.append('cover_image', blogForm.cover)
+      if (blogForm.cover) fd.append('coverImage', blogForm.cover)
 
       const url = editMode && selectedItemId ? `${API_BASE}/update/blogs/${selectedItemId}` : `${API_BASE}/blogs`
       const method = editMode && selectedItemId ? 'PATCH' : 'POST'
