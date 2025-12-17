@@ -342,6 +342,9 @@ export default function PublicPortfolio() {
                 portfolio.skills.map((skill, i) => (
                   <div key={i} className="glass-effect p-6 rounded-xl text-center">
                     <div className="text-xl font-semibold">{skill.name}</div>
+                    {skill.category && (
+                      <div className="mt-1 text-xs text-purple-600 font-medium">{skill.category}</div>
+                    )}
                     {skill.proficiency && (
                       <div className="mt-2 text-sm text-gray-600">{skill.proficiency}%</div>
                     )}
@@ -366,8 +369,23 @@ export default function PublicPortfolio() {
                       <img src={project.image_url} alt={project.title} className="w-full h-48 object-cover" />
                     )}
                     <div className="p-6">
-                      <h3 className="text-xl font-bold">{project.title}</h3>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-xl font-bold">{project.title}</h3>
+                        {project.category && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">{project.category}</span>
+                        )}
+                      </div>
                       <p className="mt-2 text-gray-600">{project.description}</p>
+                      {project.long_description && (
+                        <p className="mt-2 text-sm text-gray-500">{project.long_description}</p>
+                      )}
+                      {project.technologies && project.technologies.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {project.technologies.map((tech, ti) => (
+                            <span key={ti} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{tech}</span>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-4 flex gap-3">
                         {project.github_url && (
                           <a 
@@ -570,8 +588,33 @@ export default function PublicPortfolio() {
                       <img src={blog.cover_image} alt={blog.title} className="w-full h-48 object-cover" />
                     )}
                     <div className="p-6">
-                      <h3 className="text-xl font-bold">{blog.title}</h3>
-                      <p className="mt-2 text-gray-600">{blog.excerpt}</p>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-xl font-bold">{blog.title}</h3>
+                        {blog.published && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Published</span>
+                        )}
+                      </div>
+                      {blog.author && (
+                        <p className="text-sm text-gray-500">By {blog.author}</p>
+                      )}
+                      {blog.published_at && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(blog.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      )}
+                      {blog.excerpt && (
+                        <p className="mt-3 text-gray-600">{blog.excerpt}</p>
+                      )}
+                      {blog.content && (
+                        <p className="mt-2 text-sm text-gray-500 line-clamp-3">{blog.content}</p>
+                      )}
+                      {blog.tags && blog.tags.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {blog.tags.map((tag, ti) => (
+                            <span key={ti} className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded">{tag}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
