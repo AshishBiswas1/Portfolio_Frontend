@@ -566,25 +566,32 @@ export default function CreatePortfolio() {
     setLoading(true)
     setMessage(null)
     try {
-      const fd = new FormData()
-      if (expForm.company) fd.append('company', expForm.company)
-      if (expForm.position) fd.append('position', expForm.position)
-      if (expForm.location) fd.append('location', expForm.location)
-      if (expForm.employment_type) fd.append('employment_type', expForm.employment_type)
-      if (expForm.start_date) fd.append('start_date', expForm.start_date)
-      if (expForm.end_date) fd.append('end_date', expForm.end_date)
-      fd.append('is_current', expForm.is_current)
-      if (expForm.description) fd.append('description', expForm.description)
-      if (expForm.responsibilities) fd.append('responsibilities', expForm.responsibilities)
-      if (expForm.technologies) fd.append('technologies', expForm.technologies)
+      const payload = {
+        company: expForm.company || undefined,
+        position: expForm.position || undefined,
+        location: expForm.location || undefined,
+        employment_type: expForm.employment_type || undefined,
+        start_date: expForm.start_date || undefined,
+        end_date: expForm.end_date || undefined,
+        is_current: expForm.is_current,
+        description: expForm.description || undefined,
+        responsibilities: expForm.responsibilities || undefined,
+        technologies: expForm.technologies || undefined
+      }
+
+      // Remove undefined fields
+      Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key])
 
       const url = editMode && selectedItemId ? `${API_BASE}/update/experience/${selectedItemId}` : `${API_BASE}/experience`
       const method = editMode && selectedItemId ? 'PATCH' : 'POST'
 
       const res = await fetch(url, {
         method: method,
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify(payload)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed')
