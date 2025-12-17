@@ -6,6 +6,7 @@ import Signup from './pages/Signup'
 import CreatePortfolio from './pages/CreatePortfolio'
 import PortfolioPreview from './pages/PortfolioPreview'
 import PublicPortfolio from './pages/PublicPortfolio'
+import AshishPortfolio from './pages/AshishPortfolio'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/create" element={<CreatePortfolio />} />
           <Route path="/preview" element={<PortfolioPreview />} />
+          <Route path="/ashish-biswas" element={<AshishPortfolio />} />
           <Route path="/:username/publish" element={<PublicPortfolio />} />
           <Route
             path="/*"

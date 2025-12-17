@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 export default function PortfolioNavbar({ 
 	onTogglePanel, 
 	previewMode = false, 
+	isPublic = false,
 	isPublished = false, 
 	username = null, 
 	onTogglePublish 
@@ -37,7 +38,7 @@ export default function PortfolioNavbar({
 						<a href="#blogs" onClick={scrollTo('blogs')} className="text-gray-200 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Blogs</a>
 					</nav>
 
-					{!previewMode && (
+					{!previewMode && !isPublic && (
 						<div className="flex items-center gap-3">
 							<button
 								onClick={() => onTogglePanel && onTogglePanel()}

@@ -24,9 +24,9 @@ const Hero = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button className="btn-primary text-lg px-8 py-4">
-              Explore Portfolio
-            </button>
+            <Link to="/ashish-biswas" className="btn-primary text-lg px-8 py-4">
+              Meet Ashish Biswas
+            </Link>
             <Link to="/create" className="px-8 py-4 border-2 border-white/30 text-white rounded-full font-semibold hover:bg-white/10 hover:border-white/50 transition-all duration-300">
               Create Portfolio
             </Link>
