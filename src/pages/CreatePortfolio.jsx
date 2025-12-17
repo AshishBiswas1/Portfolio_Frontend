@@ -61,6 +61,7 @@ export default function CreatePortfolio() {
   const [scrollProgress, setScrollProgress] = useState(0)
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [currentExpIndex, setCurrentExpIndex] = useState(0)
 
   // Check authentication on mount with a short grace period in case token arrives shortly
   useEffect(() => {
@@ -942,6 +943,9 @@ export default function CreatePortfolio() {
                 portfolio.skills.map((skill, i) => (
                   <div key={i} className="glass-effect p-6 rounded-xl text-center">
                     <div className="text-xl font-semibold">{skill.name}</div>
+                    {skill.category && (
+                      <div className="mt-1 text-xs text-purple-600 font-medium">{skill.category}</div>
+                    )}
                     {skill.proficiency && (
                       <div className="mt-2 text-sm text-gray-600">{skill.proficiency}%</div>
                     )}
@@ -966,8 +970,23 @@ export default function CreatePortfolio() {
                       <img src={project.image_url} alt={project.title} className="w-full h-48 object-cover" />
                     )}
                     <div className="p-6">
-                      <h3 className="text-xl font-bold">{project.title}</h3>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-xl font-bold">{project.title}</h3>
+                        {project.category && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">{project.category}</span>
+                        )}
+                      </div>
                       <p className="mt-2 text-gray-600">{project.description}</p>
+                      {project.long_description && (
+                        <p className="mt-2 text-sm text-gray-500">{project.long_description}</p>
+                      )}
+                      {project.technologies && project.technologies.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {project.technologies.map((tech, ti) => (
+                            <span key={ti} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{tech}</span>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-4 flex gap-3">
                         {project.github_url && (
                           <a 
@@ -1007,20 +1026,153 @@ export default function CreatePortfolio() {
         </section>
 
         {/* Experience Section */}
-        <section id="experience" className="section-padding bg-white">
+        <section id="experience" className="section-padding bg-gray-50">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Experience</h2>
-            <div className="space-y-8">
+            <h2 className="text-4xl font-bold text-center mb-12 text-gray-900">Experience</h2>
+            <div className="relative">
               {portfolio.experience.length > 0 ? (
-                portfolio.experience.map((exp, i) => (
-                  <div key={i} className="glass-effect p-6 rounded-xl">
-                    <h3 className="text-2xl font-bold">{exp.position}</h3>
-                    <p className="text-lg text-gray-600">{exp.company}</p>
-                    <p className="mt-2 text-gray-500">{exp.description}</p>
+                <>
+                  {/* Carousel Container */}
+                  <div className="overflow-hidden">
+                    <div 
+                      id="experience-carousel" 
+                      className="flex transition-transform duration-500 ease-in-out"
+                      style={{ transform: `translateX(-${currentExpIndex * 100}%)` }}
+                    >
+                      {portfolio.experience.map((exp, i) => (
+                        <div key={i} className="min-w-full flex-shrink-0 px-2">
+                          <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
+                    <div className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-bold text-gray-900 mb-1">{exp.position}</h3>
+                          <p className="text-lg font-semibold text-purple-600">{exp.company}</p>
+                          {exp.location && (
+                            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              {exp.location}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start md:items-end gap-2">
+                          {exp.employment_type && (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
+                              {exp.employment_type}
+                            </span>
+                          )}
+                          {(exp.start_date || exp.end_date || exp.is_current) && (
+                            <p className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {exp.start_date && new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                              {(exp.start_date && (exp.end_date || exp.is_current)) && ' - '}
+                              {exp.is_current ? <span className="text-green-600 font-semibold">Present</span> : exp.end_date && new Date(exp.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {exp.description && (
+                        <div className="mb-4">
+                          <p className="text-gray-700 leading-relaxed">{exp.description}</p>
+                        </div>
+                      )}
+
+                      {exp.responsibilities && exp.responsibilities.length > 0 && (
+                        <div className="mb-4 bg-gray-50 rounded-lg p-4">
+                          <p className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                            Key Responsibilities
+                          </p>
+                          <ul className="space-y-2">
+                            {exp.responsibilities.map((resp, ri) => (
+                              <li key={ri} className="flex items-start gap-2 text-sm text-gray-700">
+                                <svg className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                <span>{resp}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {exp.technologies && exp.technologies.length > 0 && (
+                        <div className="pt-4 border-t border-gray-100">
+                          <p className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                            Technologies Used
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {exp.technologies.map((tech, ti) => (
+                              <span key={ti} className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border border-purple-200">
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ))
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  {portfolio.experience.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setCurrentExpIndex(prev => Math.max(0, prev - 1))}
+                        disabled={currentExpIndex === 0}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-gray-800 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
+                        aria-label="Previous experience"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setCurrentExpIndex(prev => Math.min(portfolio.experience.length - 1, prev + 1))}
+                        disabled={currentExpIndex === portfolio.experience.length - 1}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-gray-800 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
+                        aria-label="Next experience"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+
+                  {/* Indicators */}
+                  {portfolio.experience.length > 1 && (
+                    <div className="flex justify-center gap-2 mt-6">
+                      {portfolio.experience.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentExpIndex(idx)}
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            idx === currentExpIndex 
+                              ? 'w-8 bg-purple-600' 
+                              : 'w-2 bg-gray-300 hover:bg-gray-400'
+                          }`}
+                          aria-label={`Go to experience ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="text-center text-gray-400">No experience added yet</div>
+                <div className="text-center text-gray-400 py-12">No experience added yet</div>
               )}
             </div>
           </div>
@@ -1038,8 +1190,33 @@ export default function CreatePortfolio() {
                       <img src={blog.cover_image} alt={blog.title} className="w-full h-48 object-cover" />
                     )}
                     <div className="p-6">
-                      <h3 className="text-xl font-bold">{blog.title}</h3>
-                      <p className="mt-2 text-gray-600">{blog.excerpt}</p>
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-xl font-bold">{blog.title}</h3>
+                        {blog.published && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Published</span>
+                        )}
+                      </div>
+                      {blog.author && (
+                        <p className="text-sm text-gray-500">By {blog.author}</p>
+                      )}
+                      {blog.published_at && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(blog.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      )}
+                      {blog.excerpt && (
+                        <p className="mt-3 text-gray-600">{blog.excerpt}</p>
+                      )}
+                      {blog.content && (
+                        <p className="mt-2 text-sm text-gray-500 line-clamp-3">{blog.content}</p>
+                      )}
+                      {blog.tags && blog.tags.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {blog.tags.map((tag, ti) => (
+                            <span key={ti} className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded">{tag}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
