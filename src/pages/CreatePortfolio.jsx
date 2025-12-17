@@ -45,6 +45,7 @@ export default function CreatePortfolio() {
     blogs: [],
     services: []
   })
+  const [allProjects, setAllProjects] = useState([])
   const [isPublished, setIsPublished] = useState(false)
   const [username, setUsername] = useState(null)
   const [about, setAbout] = useState({ name: '', designation: '', description: '' })
@@ -86,6 +87,15 @@ export default function CreatePortfolio() {
         if (res.ok) {
           const data = await res.json()
           if (data && data.data) {
+            // Backend returns only featured projects, so we need to fetch all projects separately
+            const allProjectsRes = await fetch(`${API_BASE}/projects`, { headers: { Authorization: `Bearer ${token}` } })
+            let allProjectsData = []
+            if (allProjectsRes.ok) {
+              const allProjData = await allProjectsRes.json()
+              allProjectsData = allProjData.data || []
+            }
+            
+            setAllProjects(allProjectsData)
             setPortfolio({
               about: data.data.about || { name: '', description: '', profile_image: '' },
               skills: data.data.skills || [],
@@ -381,6 +391,15 @@ export default function CreatePortfolio() {
       if (p.ok) {
         const pd = await p.json()
         if (pd?.data) {
+          // Fetch all projects separately for side panel
+          const allProjectsRes = await fetch(`${API_BASE}/projects`, { headers: { Authorization: `Bearer ${token}` } })
+          let allProjectsData = []
+          if (allProjectsRes.ok) {
+            const allProjData = await allProjectsRes.json()
+            allProjectsData = allProjData.data || []
+          }
+          
+          setAllProjects(allProjectsData)
           setPortfolio({
             about: pd.data.about || portfolio.about,
             skills: pd.data.skills || [],
@@ -1293,10 +1312,13 @@ export default function CreatePortfolio() {
               <div className="mt-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Projects</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {portfolio.projects && portfolio.projects.length > 0 ? (
-                    portfolio.projects.map((project, i) => (
+                  {allProjects && allProjects.length > 0 ? (
+                    allProjects.map((project, i) => (
                       <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                        <span>{project.title}</span>
+                        <span className="flex-1">{project.title}</span>
+                        {project.featured && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded mr-2">Featured</span>
+                        )}
                         <button type="button" onClick={() => handleEditProject(project)} className="text-purple-600 hover:text-purple-800 text-xs">
                           Edit
                         </button>
