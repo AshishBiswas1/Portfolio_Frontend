@@ -219,10 +219,10 @@ export default function AshishPortfolio() {
 
     setContactLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/message`, {
+      const res = await fetch(`${API_BASE}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiver_id, sender_email: contactEmail, message_text: contactMessage })
+        body: JSON.stringify({ receiver_id, sender_email: contactEmail, message: contactMessage })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Failed to send message')
