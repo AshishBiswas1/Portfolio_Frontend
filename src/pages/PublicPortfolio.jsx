@@ -619,7 +619,7 @@ export default function PublicPortfolio() {
                   </div>
                 ))
               ) : (
-                <div className="col-span-full text-center text-gray-400">No blogs added yet</div>
+                <div className="col-span-full text-center text-gray-400">I have not posted any blogs yet.</div>
               )}
             </div>
           </div>

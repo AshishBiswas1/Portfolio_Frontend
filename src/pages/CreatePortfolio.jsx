@@ -85,6 +85,13 @@ export default function CreatePortfolio() {
     ;(async () => {
       try {
         const res = await fetch(`${API_BASE}/portfolio`, { headers: { Authorization: `Bearer ${token}` } })
+        if (res.status === 401) {
+          // Token expired or invalid - clear it and redirect to login
+          localStorage.removeItem('AUTH_TOKEN')
+          setMessage({ type: 'error', text: 'Session expired. Please login again.' })
+          setTimeout(() => navigate('/login'), 1400)
+          return
+        }
         if (res.ok) {
           const data = await res.json()
           if (data && data.data) {
@@ -113,9 +120,13 @@ export default function CreatePortfolio() {
             setIsPublished(data.data.is_published || false)
             setUsername(data.data.username || null)
           }
+        } else {
+          const errorData = await res.json().catch(() => ({}))
+          setMessage({ type: 'error', text: errorData.message || 'Failed to load portfolio data' })
         }
       } catch (err) {
         console.error('Fetch portfolio error', err)
+        setMessage({ type: 'error', text: 'Network error. Please check your connection.' })
       }
     })()
   }, [token])
@@ -335,7 +346,7 @@ export default function CreatePortfolio() {
   const [activeTab, setActiveTab] = useState('skill')
   const [editMode, setEditMode] = useState(false)
   const [selectedItemId, setSelectedItemId] = useState(null)
-  const [skillForm, setSkillForm] = useState({ name: '', category: '', proficiency: 50, order_index: 0 })
+  const [skillForm, setSkillForm] = useState({ name: '', category: '', proficiency: 50, order_index: 0, featured: true })
   const [projectForm, setProjectForm] = useState({ 
     title: '', 
     description: '', 
@@ -358,7 +369,8 @@ export default function CreatePortfolio() {
     is_current: false, 
     description: '', 
     responsibilities: '', 
-    technologies: '' 
+    technologies: '',
+    featured: true
   })
   const [blogForm, setBlogForm] = useState({ 
     title: '', 
@@ -368,7 +380,8 @@ export default function CreatePortfolio() {
     tags: '', 
     published: false, 
     published_at: '', 
-    cover: null 
+    cover: null,
+    featured: true
   })
   const [serviceForm, setServiceForm] = useState({
     title: '',
@@ -376,7 +389,8 @@ export default function CreatePortfolio() {
     features: '',
     price_range: '',
     active: true,
-    order_index: 0
+    order_index: 0,
+    featured: true
   })
 
   // Contact form state (message to portfolio owner)
@@ -421,7 +435,8 @@ export default function CreatePortfolio() {
       name: skill.name || '',
       category: skill.category || '',
       proficiency: skill.proficiency || 50,
-      order_index: skill.order_index || 0
+      order_index: skill.order_index || 0,
+      featured: skill.featured !== undefined ? skill.featured : true
     })
     setSelectedItemId(skill.id)
     setEditMode(true)
@@ -447,14 +462,15 @@ export default function CreatePortfolio() {
             name: skillForm.name,
             category: skillForm.category || null,
             proficiency: skillForm.proficiency,
-            order_index: skillForm.order_index || 0
+            order_index: skillForm.order_index || 0,
+            featured: skillForm.featured
           })
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.message || 'Failed to update skill')
         setMessage({ type: 'success', text: 'Skill updated' })
         await refreshPortfolio()
-        setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 })
+        setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0, featured: true })
         setEditMode(false)
         setSelectedItemId(null)
       } catch (err) {
@@ -468,7 +484,8 @@ export default function CreatePortfolio() {
         name: skillForm.name, 
         category: skillForm.category || null,
         proficiency: skillForm.proficiency,
-        order_index: skillForm.order_index || 0
+        order_index: skillForm.order_index || 0,
+        featured: skillForm.featured
       })
       setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 })
     }
@@ -554,7 +571,8 @@ export default function CreatePortfolio() {
       is_current: exp.is_current || false,
       description: exp.description || '',
       responsibilities: exp.responsibilities || '',
-      technologies: exp.technologies || ''
+      technologies: exp.technologies || '',
+      featured: exp.featured !== undefined ? exp.featured : true
     })
     setSelectedItemId(exp.id)
     setEditMode(true)
@@ -577,7 +595,8 @@ export default function CreatePortfolio() {
         is_current: expForm.is_current,
         description: expForm.description || undefined,
         responsibilities: expForm.responsibilities || undefined,
-        technologies: expForm.technologies || undefined
+        technologies: expForm.technologies || undefined,
+        featured: expForm.featured
       }
 
       // Remove undefined fields
@@ -608,7 +627,8 @@ export default function CreatePortfolio() {
         is_current: false, 
         description: '', 
         responsibilities: '', 
-        technologies: '' 
+        technologies: '',
+        featured: true
       })
       setEditMode(false)
       setSelectedItemId(null)
@@ -628,7 +648,8 @@ export default function CreatePortfolio() {
       tags: blog.tags || '',
       published: blog.published || false,
       published_at: blog.published_at || '',
-      cover: null
+      cover: null,
+      featured: blog.featured !== undefined ? blog.featured : true
     })
     setSelectedItemId(blog.id)
     setEditMode(true)
@@ -650,6 +671,7 @@ export default function CreatePortfolio() {
       fd.append('published', blogForm.published)
       if (blogForm.published_at) fd.append('published_at', blogForm.published_at)
       if (blogForm.cover) fd.append('coverImage', blogForm.cover)
+      fd.append('featured', blogForm.featured)
 
       const url = editMode && selectedItemId ? `${API_BASE}/update/blogs/${selectedItemId}` : `${API_BASE}/blogs`
       const method = editMode && selectedItemId ? 'PATCH' : 'POST'
@@ -671,7 +693,8 @@ export default function CreatePortfolio() {
         tags: '', 
         published: false, 
         published_at: '', 
-        cover: null 
+        cover: null,
+        featured: true
       })
       setEditMode(false)
       setSelectedItemId(null)
@@ -689,7 +712,8 @@ export default function CreatePortfolio() {
       features: Array.isArray(service.features) ? service.features.join(', ') : '',
       price_range: service.price_range || '',
       active: service.active !== undefined ? service.active : true,
-      order_index: service.order_index || 0
+      order_index: service.order_index || 0,
+      featured: service.featured !== undefined ? service.featured : true
     })
     setSelectedItemId(service.id)
     setEditMode(true)
@@ -708,7 +732,8 @@ export default function CreatePortfolio() {
         features: serviceForm.features ? serviceForm.features.split(',').map(f => f.trim()) : [],
         price_range: serviceForm.price_range,
         active: serviceForm.active,
-        order_index: serviceForm.order_index || 0
+        order_index: serviceForm.order_index || 0,
+        featured: serviceForm.featured
       }
 
       const url = editMode && selectedItemId ? `${API_BASE}/update/services/${selectedItemId}` : `${API_BASE}/services`
@@ -732,7 +757,8 @@ export default function CreatePortfolio() {
         features: '',
         price_range: '',
         active: true,
-        order_index: 0
+        order_index: 0,
+        featured: true
       })
       setEditMode(false)
       setSelectedItemId(null)
@@ -939,8 +965,8 @@ export default function CreatePortfolio() {
           <div className="max-w-7xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-12">Skills</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {portfolio.skills.length > 0 ? (
-                portfolio.skills.map((skill, i) => (
+              {portfolio.skills.filter(s => s.featured !== false).length > 0 ? (
+                portfolio.skills.filter(s => s.featured !== false).map((skill, i) => (
                   <div key={i} className="glass-effect p-6 rounded-xl text-center">
                     <div className="text-xl font-semibold">{skill.name}</div>
                     {skill.category && (
@@ -1039,7 +1065,7 @@ export default function CreatePortfolio() {
                       className="flex transition-transform duration-500 ease-in-out"
                       style={{ transform: `translateX(-${currentExpIndex * 100}%)` }}
                     >
-                      {portfolio.experience.map((exp, i) => (
+                      {portfolio.experience.filter(e => e.featured !== false).map((exp, i) => (
                         <div key={i} className="min-w-full flex-shrink-0 px-2">
                           <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
                     <div className="p-6">
@@ -1128,7 +1154,7 @@ export default function CreatePortfolio() {
                   </div>
 
                   {/* Navigation Arrows */}
-                  {portfolio.experience.length > 1 && (
+                  {portfolio.experience.filter(e => e.featured !== false).length > 1 && (
                     <>
                       <button
                         onClick={() => setCurrentExpIndex(prev => Math.max(0, prev - 1))}
@@ -1141,8 +1167,8 @@ export default function CreatePortfolio() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => setCurrentExpIndex(prev => Math.min(portfolio.experience.length - 1, prev + 1))}
-                        disabled={currentExpIndex === portfolio.experience.length - 1}
+                        onClick={() => setCurrentExpIndex(prev => Math.min(portfolio.experience.filter(e => e.featured !== false).length - 1, prev + 1))}
+                        disabled={currentExpIndex === portfolio.experience.filter(e => e.featured !== false).length - 1}
                         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-gray-800 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
                         aria-label="Next experience"
                       >
@@ -1154,9 +1180,9 @@ export default function CreatePortfolio() {
                   )}
 
                   {/* Indicators */}
-                  {portfolio.experience.length > 1 && (
+                  {portfolio.experience.filter(e => e.featured !== false).length > 1 && (
                     <div className="flex justify-center gap-2 mt-6">
-                      {portfolio.experience.map((_, idx) => (
+                      {portfolio.experience.filter(e => e.featured !== false).map((_, idx) => (
                         <button
                           key={idx}
                           onClick={() => setCurrentExpIndex(idx)}
@@ -1183,8 +1209,8 @@ export default function CreatePortfolio() {
           <div className="max-w-7xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-12">Blogs</h2>
             <div className="grid md:grid-cols-2 gap-8">
-              {portfolio.blogs.length > 0 ? (
-                portfolio.blogs.map((blog, i) => (
+              {portfolio.blogs.filter(b => b.featured !== false).length > 0 ? (
+                portfolio.blogs.filter(b => b.featured !== false).map((blog, i) => (
                   <div key={i} className="bg-white rounded-xl shadow-lg overflow-hidden">
                     {blog.cover_image && (
                       <img src={blog.cover_image} alt={blog.title} className="w-full h-48 object-cover" />
@@ -1221,7 +1247,7 @@ export default function CreatePortfolio() {
                   </div>
                 ))
               ) : (
-                <div className="col-span-full text-center text-gray-400">No blogs added yet</div>
+                <div className="col-span-full text-center text-gray-400">I have not posted any blogs yet.</div>
               )}
             </div>
           </div>
@@ -1232,8 +1258,8 @@ export default function CreatePortfolio() {
           <div className="max-w-7xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-12">Services</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {portfolio.services && portfolio.services.length > 0 ? (
-                portfolio.services.map((service, i) => (
+              {portfolio.services && portfolio.services.filter(s => s.featured !== false).length > 0 ? (
+                portfolio.services.filter(s => s.featured !== false).map((service, i) => (
                   <div key={i} className="bg-gradient-to-br from-purple-50 to-white rounded-xl shadow-lg p-6 border border-purple-100">
                     <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
                     <p className="text-gray-600 mb-4">{service.description}</p>
@@ -1408,12 +1434,16 @@ export default function CreatePortfolio() {
                     <label className="block text-sm font-medium text-gray-700">Order Index</label>
                     <input type="number" min="0" value={skillForm.order_index} onChange={e=>setSkillForm({...skillForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="skill-featured" checked={skillForm.featured} onChange={e=>setSkillForm({...skillForm,featured:e.target.checked})} className="rounded" />
+                    <label htmlFor="skill-featured" className="text-sm font-medium text-gray-700">Featured Skill</label>
+                  </div>
                   <div className="flex gap-2">
                     <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
                       {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
                     </button>
                     {editMode && (
-                      <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0 }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                      <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setSkillForm({ name: '', category: '', proficiency: 50, order_index: 0, featured: true }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
                         Cancel
                       </button>
                     )}
@@ -1566,6 +1596,10 @@ export default function CreatePortfolio() {
                   <label className="block text-sm font-medium text-gray-700">Technologies Used</label>
                   <input value={expForm.technologies} onChange={e=>setExpForm({...expForm,technologies:e.target.value})} placeholder="React, Node.js, AWS" className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
                 </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="exp-featured" checked={expForm.featured} onChange={e=>setExpForm({...expForm,featured:e.target.checked})} className="rounded" />
+                  <label htmlFor="exp-featured" className="text-sm font-medium text-gray-700">Featured Experience</label>
+                </div>
                 <div className="flex gap-2">
                   <button disabled={loading} type="submit" className="flex-1 btn-primary text-sm py-2">
                     {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
@@ -1624,6 +1658,10 @@ export default function CreatePortfolio() {
                   <input type="checkbox" id="blog-published" checked={blogForm.published} onChange={e=>setBlogForm({...blogForm,published:e.target.checked})} className="rounded" />
                   <label htmlFor="blog-published" className="text-sm font-medium text-gray-700">Publish immediately</label>
                 </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="blog-featured" checked={blogForm.featured} onChange={e=>setBlogForm({...blogForm,featured:e.target.checked})} className="rounded" />
+                  <label htmlFor="blog-featured" className="text-sm font-medium text-gray-700">Featured Blog</label>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Publish Date</label>
                   <input type="datetime-local" value={blogForm.published_at} onChange={e=>setBlogForm({...blogForm,published_at:e.target.value})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
@@ -1637,7 +1675,7 @@ export default function CreatePortfolio() {
                     {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
                   </button>
                   {editMode && (
-                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setBlogForm({ title: '', excerpt: '', content: '', author: '', tags: '', published: false, published_at: '', cover: null }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setBlogForm({ title: '', excerpt: '', content: '', author: '', tags: '', published: false, published_at: '', cover: null, featured: true }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
                       Cancel
                     </button>
                   )}
@@ -1686,6 +1724,10 @@ export default function CreatePortfolio() {
                   <input type="checkbox" id="service-active" checked={serviceForm.active} onChange={e=>setServiceForm({...serviceForm,active:e.target.checked})} className="rounded" />
                   <label htmlFor="service-active" className="text-sm font-medium text-gray-700">Active Service</label>
                 </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="service-featured" checked={serviceForm.featured} onChange={e=>setServiceForm({...serviceForm,featured:e.target.checked})} className="rounded" />
+                  <label htmlFor="service-featured" className="text-sm font-medium text-gray-700">Featured Service</label>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Order Index</label>
                   <input type="number" min="0" value={serviceForm.order_index} onChange={e=>setServiceForm({...serviceForm,order_index:parseInt(e.target.value||0)})} className="mt-1 block w-full rounded-md border border-gray-300 p-2" />
@@ -1695,7 +1737,7 @@ export default function CreatePortfolio() {
                     {loading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')}
                   </button>
                   {editMode && (
-                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setServiceForm({ title: '', description: '', features: '', price_range: '', active: true, order_index: 0 }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
+                    <button type="button" onClick={() => { setEditMode(false); setSelectedItemId(null); setServiceForm({ title: '', description: '', features: '', price_range: '', active: true, order_index: 0, featured: true }); }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-sm">
                       Cancel
                     </button>
                   )}
